@@ -25,8 +25,8 @@ SOFTWARE.
 
 <plugin xmlns="http://apache.org/cordova/ns/plugins/1.0"
     xmlns:android="http://schemas.android.com/apk/res/android"
-    id="cc.fovea.cordova.openwith"
-    version="2.0.0">
+    id="vault12.openwith"
+    version="0.0.1">
 
     <name>OpenWith</name>
 	<description>Cordova "Open With" plugin for iOS and Android</description>

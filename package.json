@@ -1,9 +1,9 @@
 {
-  "name": "cc.fovea.cordova.openwith",
-  "version": "2.0.0",
+  "name": "@vault12/plugin-openwith",
+  "version": "0.0.1",
   "description": "Cordova \"Open With\" plugin for iOS and Android",
   "cordova": {
-    "id": "cc.fovea.cordova.openwith",
+    "id": "vault12.openwith",
     "platforms": [
       "android",
       "ios"
@@ -11,7 +11,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/j3k0/cordova-plugin-openwith.git"
+    "url": "https://github.com/vault12/cordova-plugin-openwith.git"
   },
   "keywords": [
     "ecosystem:cordova",

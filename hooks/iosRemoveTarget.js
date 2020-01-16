@@ -29,7 +29,7 @@
 // THE SOFTWARE.
 //
 
-const PLUGIN_ID = "cc.fovea.cordova.openwith";
+const PLUGIN_ID = "vault12.openwith";
 const BUNDLE_SUFFIX = ".shareextension";
 
 var fs = require('fs');
