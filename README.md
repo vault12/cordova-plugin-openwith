@@ -7,6 +7,9 @@
 - Added `IOS_PROJECT_BUNDLE_ID` install var to ensure share extension bundle identifier is correctly set up.
 
 
+The plugin can be added to Vault12 project using the next command:
+
+
 ```sh
 cordova plugin add ../v12-cordova-plugin-openwith/ \
   --variable IOS_URL_SCHEME="vaulttwelve" \
