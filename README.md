@@ -4,7 +4,8 @@
 
 - Supported multiple UTIs. Specify via the same install var `IOS_UNIFORM_TYPE_IDENTIFIER` separated by comma (see example install command)
 - Does not show native UI popover with "Post" option.
- 
+- Added `IOS_PROJECT_BUNDLE_ID` install var to ensure share extension bundle identifier is correctly set up.
+
 
 ```sh
 cordova plugin add ../v12-cordova-plugin-openwith/ \
