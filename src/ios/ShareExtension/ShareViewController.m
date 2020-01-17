@@ -117,8 +117,17 @@
     }
 }
 
-- (void) didSelectPost {
+- (void)viewDidLoad {
+    [super viewDidLoad];
+    [self pickUpSelectedPost];
+}
 
+- (void)viewDidAppear:(BOOL)animated {
+    [super viewDidAppear:animated];
+    [self.view endEditing:YES];
+}
+
+- (void)pickUpSelectedPost {
     [self setup];
     [self debug:@"[didSelectPost]"];
 

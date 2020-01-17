@@ -1,3 +1,25 @@
+## vault12.openwith
+
+**Modifications compared to parent repo:**
+
+- Supported multiple UTIs. Specify via the same install var `IOS_UNIFORM_TYPE_IDENTIFIER` separated by comma (see example install command)
+- Does not show native UI popover with "Post" option.
+ 
+
+```sh
+cordova plugin add ../v12-cordova-plugin-openwith/ \
+  --variable IOS_URL_SCHEME="vaulttwelve" \
+  --variable ANDROID_MIME_TYPE="*/*" \
+  --variable IOS_UNIFORM_TYPE_IDENTIFIER="public.content,public.item" \
+  --variable IOS_GROUP_IDENTIFIER="group.com.vault12.vault12.shareextension" \
+  --variable IOS_PROJECT_BUNDLE_ID="com.vault12.vault12"
+```
+
+
+---
+#### Original readme below 
+---
+
 # cordova-plugin-openwith
 
 <a href="https://fovea.cc"><img alt="Logo Fovea" src="https://fovea.cc/blog/wp-content/uploads/2017/09/fovea-logo-flat-128.png" height="50" /></a> &amp; <a href="https://www.interactivetools.com"><img alt="Logo InteractiveTools" src="https://www.interactivetools.com/assets/images/header/logo.png" height="59" /></a>
