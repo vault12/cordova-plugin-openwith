@@ -150,9 +150,14 @@
                     if([(NSObject*)item isKindOfClass:[UIImage class]]) {
                         data = UIImagePNGRepresentation((UIImage*)item);
                     }
+                    if ([(NSObject *)item isKindOfClass:[NSData class]]) {
+                        data = [NSData dataWithData:(NSData *)item];
+                    }
                     
                     NSString *suggestedName = @"";
-                    if ([itemProvider respondsToSelector:NSSelectorFromString(@"getSuggestedName")]) {
+                    if ([(NSObject*)item isKindOfClass:[NSURL class]]) {
+                        suggestedName = [[(NSURL*)item absoluteString] lastPathComponent];
+                    } else if ([itemProvider respondsToSelector:NSSelectorFromString(@"getSuggestedName")]) {
                         suggestedName = [itemProvider valueForKey:@"suggestedName"];
                     }
                     
