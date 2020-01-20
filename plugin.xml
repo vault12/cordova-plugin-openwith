@@ -43,6 +43,7 @@ SOFTWARE.
     <platform name="ios">
         <preference name="IOS_URL_SCHEME" />
         <preference name="IOS_UNIFORM_TYPE_IDENTIFIER" />
+        <preference name="IOS_GROUP_IDENTIFIER" />
 
         <js-module src="www/openwith.js" name="openwith">
             <clobbers target="cordova.openwith" />
@@ -71,6 +72,17 @@ SOFTWARE.
                         <string>$IOS_URL_SCHEME</string>
                     </array>
                 </dict>
+            </array>
+        </config-file>
+
+        <config-file target="*-Debug.plist" parent="com.apple.security.application-groups">
+            <array>
+                <string>$IOS_GROUP_IDENTIFIER</string>
+            </array>
+        </config-file>
+        <config-file target="*-Release.plist" parent="com.apple.security.application-groups">
+            <array>
+                <string>$IOS_GROUP_IDENTIFIER</string>
             </array>
         </config-file>
 
