@@ -160,7 +160,7 @@
                     } else if ([itemProvider respondsToSelector:NSSelectorFromString(@"getSuggestedName")]) {
                         suggestedName = [itemProvider valueForKey:@"suggestedName"];
                     }
-                    
+                                        
                     NSString *uti = @"";
                     NSArray<NSString *> *utis = [NSArray new];
                     if ([itemProvider.registeredTypeIdentifiers count] > 0) {
@@ -170,35 +170,53 @@
                     else {
                         uti = SHAREEXT_UNIFORM_TYPE_IDENTIFIER;
                     }
-                    NSDictionary *dict = @{
-                        @"text": self.contentText,
-                        @"backURL": self.backURL,
-                        @"data" : data,
-                        @"uti": uti,
-                        @"utis": utis,
-                        @"name": suggestedName
+                    
+                    void (^finishWithSuggestedName)(NSString *) = ^(NSString *theSuggestedName){
+                        
+                        NSDictionary *dict = @{
+                            @"text": self.contentText,
+                            @"backURL": self.backURL,
+                            @"data" : data,
+                            @"uti": uti,
+                            @"utis": utis,
+                            @"name": theSuggestedName
+                        };
+                        [self.userDefaults setObject:dict forKey:@"image"];
+                        [self.userDefaults synchronize];
+                                                
+                        // Emit a URL that opens the cordova app
+                        NSString *url = [NSString stringWithFormat:@"%@://image", SHAREEXT_URL_SCHEME];
+                        
+                        // Not allowed:
+                        // [[UIApplication sharedApplication] openURL:[NSURL URLWithString:url]];
+                        
+                        // Crashes:
+                        // [self.extensionContext openURL:[NSURL URLWithString:url] completionHandler:nil];
+                        
+                        // From https://stackoverflow.com/a/25750229/2343390
+                        // Reported not to work since iOS 8.3
+                        // NSURLRequest *request = [[NSURLRequest alloc] initWithURL:[NSURL URLWithString:url]];
+                        // [self.webView loadRequest:request];
+                        
+                        [self openURL:[NSURL URLWithString:url]];
+                        
+                        // Inform the host that we're done, so it un-blocks its UI.
+                        [self.extensionContext completeRequestReturningItems:@[] completionHandler:nil];
+                        
                     };
-                    [self.userDefaults setObject:dict forKey:@"image"];
-                    [self.userDefaults synchronize];
                     
-                    // Emit a URL that opens the cordova app
-                    NSString *url = [NSString stringWithFormat:@"%@://image", SHAREEXT_URL_SCHEME];
+                    if (suggestedName != nil && [suggestedName length] > 0) {
+                        finishWithSuggestedName(suggestedName);
+                    } else {
+                        // then load file representation and get file name from url
+                        [itemProvider loadFileRepresentationForTypeIdentifier:uti completionHandler:^(NSURL * _Nullable url, NSError * _Nullable error) {
+                            if (url != nil) {
+                                NSString *theName = [[[url absoluteString] lastPathComponent] stringByRemovingPercentEncoding];
+                                finishWithSuggestedName(theName);
+                            }
+                        }];
+                    }
                     
-                    // Not allowed:
-                    // [[UIApplication sharedApplication] openURL:[NSURL URLWithString:url]];
-                    
-                    // Crashes:
-                    // [self.extensionContext openURL:[NSURL URLWithString:url] completionHandler:nil];
-                    
-                    // From https://stackoverflow.com/a/25750229/2343390
-                    // Reported not to work since iOS 8.3
-                    // NSURLRequest *request = [[NSURLRequest alloc] initWithURL:[NSURL URLWithString:url]];
-                    // [self.webView loadRequest:request];
-                    
-                    [self openURL:[NSURL URLWithString:url]];
-                    
-                    // Inform the host that we're done, so it un-blocks its UI.
-                    [self.extensionContext completeRequestReturningItems:@[] completionHandler:nil];
                 }];
                 
                 return;
