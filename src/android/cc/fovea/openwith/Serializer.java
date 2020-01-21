@@ -8,6 +8,7 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.provider.MediaStore;
+import android.provider.OpenableColumns;
 import android.util.Base64;
 import java.io.IOException;
 import java.io.InputStream;
@@ -150,6 +151,14 @@ class Serializer {
         json.put("type", type);
         json.put("uri", uri);
         json.put("path", getRealPathFromURI(contentResolver, uri));
+
+        Cursor returnCursor =
+                contentResolver.query(uri, null, null, null, null);
+        int nameIndex = returnCursor.getColumnIndex(OpenableColumns.DISPLAY_NAME);
+        returnCursor.moveToFirst();
+        String name = returnCursor.getString(nameIndex);
+        json.put("name", name);
+
         return json;
     }
 
