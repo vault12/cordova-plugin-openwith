@@ -44,7 +44,8 @@ const getPreferences = function(context, configXML, projectName) {
     return readFile(plistPath, 'utf-8')
         .then(data => plist.parse(data))
         .then(plist => {
-            const BUNDLE_IDENTIFIER = plist.CFBundleIdentifier + BUNDLE_SUFFIX;
+            const bundleId = getCordovaParameter(configXML, 'IOS_PROJECT_BUNDLE_ID') || plist.CFBundleIdentifier;
+            const BUNDLE_IDENTIFIER = bundleId + BUNDLE_SUFFIX;
             return [
                 {
                     key: '__DISPLAY_NAME__',
