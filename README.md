@@ -5,15 +5,18 @@
 - Supported multiple UTIs. Specify via the same install var `IOS_UNIFORM_TYPE_IDENTIFIER` separated by comma (see example install command)
 - Does not show native UI popover with "Post" option.
 - Added `IOS_PROJECT_BUNDLE_ID` install var to ensure share extension bundle identifier is correctly set up.
+- Automated setup of App Group, thanks to this fork: [https://github.com/Zenkit/cordova-plugin-openwith](https://github.com/Zenkit/cordova-plugin-openwith/commit/45c70f2a5a43f02f648acd027fd88234a2121c2d). 
+  - Note: exact commit from where scripts were copied: [https://github.com/Zenkit/cordova-plugin-openwith/commit/45c70f2a5a43f02f648acd027fd88234a2121c2d]()
+- Includes some fixes, e.g. retrieving file name on both iOS and Android.
 
 
 The plugin can be added to Vault12 project using the next command:
 
 
 ```sh
-cordova plugin add ../v12-cordova-plugin-openwith/ \
-  --variable IOS_URL_SCHEME="vaulttwelve" \
+cordova plugin add --nosave ../v12-cordova-plugin-openwith/ \
   --variable ANDROID_MIME_TYPE="*/*" \
+  --variable IOS_URL_SCHEME="vaulttwelve" \
   --variable IOS_UNIFORM_TYPE_IDENTIFIER="public.content,public.item" \
   --variable IOS_GROUP_IDENTIFIER="group.com.vault12.vault12.shareextension" \
   --variable IOS_PROJECT_BUNDLE_ID="com.vault12.vault12"
