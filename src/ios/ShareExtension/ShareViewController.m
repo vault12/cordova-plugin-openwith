@@ -283,8 +283,11 @@
 // This is called at the point where the Post dialog is about to be shown.
 // We use it to store the _hostBundleID
 - (void) willMoveToParentViewController: (UIViewController*)parent {
-    NSString *hostBundleID = [parent valueForKey:(@"_hostBundleID")];
-    self.backURL = [self backURLFromBundleID:hostBundleID];
+    // Note: uncomment to enable comeback-redirect from app.
+    // Not used in Vault12 so disabled
+    // NSString *hostBundleID = [parent valueForKey:(@"_hostBundleID")];
+    // self.backURL = [self backURLFromBundleID:hostBundleID];
+    self.backURL = @"";
 }
 
 @end
