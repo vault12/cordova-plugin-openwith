@@ -170,7 +170,7 @@ module.exports = function(context) {
         //Add development team and provisioning profile
         const PROVISIONING_PROFILE = getCordovaParameter(configXML, 'SHAREEXT_PROVISIONING_PROFILE');
         const DEVELOPMENT_TEAM = getCordovaParameter(configXML, 'SHAREEXT_DEVELOPMENT_TEAM');
-        if (PROVISIONING_PROFILE && DEVELOPMENT_TEAM) {
+        if (PROVISIONING_PROFILE || DEVELOPMENT_TEAM) {
             console.log(
                 'Adding team',
                 DEVELOPMENT_TEAM,
@@ -183,9 +183,13 @@ module.exports = function(context) {
                     const buildSettingsObj = configurations[key].buildSettings;
                     if (typeof buildSettingsObj['PRODUCT_NAME'] !== 'undefined') {
                         const productName = buildSettingsObj['PRODUCT_NAME'];
-                        if (productName.indexOf('ShareExt') >= 0) {
-                            buildSettingsObj['PROVISIONING_PROFILE'] = PROVISIONING_PROFILE;
-                            buildSettingsObj['DEVELOPMENT_TEAM'] = DEVELOPMENT_TEAM;
+                        if (productName.indexOf('ShareExtension') >= 0) {
+                            if (PROVISIONING_PROFILE) {
+                                buildSettingsObj['PROVISIONING_PROFILE'] = PROVISIONING_PROFILE;
+                            }
+                            if (DEVELOPMENT_TEAM) {
+                                buildSettingsObj['DEVELOPMENT_TEAM'] = DEVELOPMENT_TEAM;
+                            }
                             console.log('Added signing identities for extension!');
                         }
                     }
