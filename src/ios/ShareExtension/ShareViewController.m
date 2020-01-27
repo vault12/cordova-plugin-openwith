@@ -171,11 +171,19 @@
                     }
                     
                     void (^finishWithSuggestedName)(NSString *) = ^(NSString *theSuggestedName){
+                     
+                        NSURL *containerUrl = [[NSFileManager defaultManager] containerURLForSecurityApplicationGroupIdentifier:SHAREEXT_GROUP_IDENTIFIER];
+                        NSString *documentsPath = containerUrl.path;
+                        NSTimeInterval stamp = [[NSDate date] timeIntervalSince1970];
+                        NSString *filename = [theSuggestedName stringByAppendingFormat:@".%.0f", stamp];
+                        NSString *filePath = [documentsPath stringByAppendingPathComponent: filename];
+                        [data writeToFile:filePath atomically: YES];
                         
                         NSDictionary *dict = @{
                             @"text": self.contentText,
                             @"backURL": self.backURL,
-                            @"data" : data,
+                            // @"data" : data,
+                            @"filename": filename,
                             @"uti": uti,
                             @"utis": utis,
                             @"name": theSuggestedName

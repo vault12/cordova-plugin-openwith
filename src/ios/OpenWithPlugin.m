@@ -239,7 +239,18 @@ static NSDictionary* launchOptions = nil;
         return;
     }
     NSDictionary *dict = (NSDictionary*)object;
-    NSData *data = dict[@"data"];
+    NSData *data = nil;
+    
+    NSFileManager *fm = [NSFileManager defaultManager];
+    NSURL *containerUrl = [fm containerURLForSecurityApplicationGroupIdentifier:SHAREEXT_GROUP_IDENTIFIER];
+    NSString *documentsPath = containerUrl.path;
+    NSString *filename = dict[@"filename"];
+    NSString *filePath = [documentsPath stringByAppendingPathComponent: filename];
+    if (filename != nil && [fm fileExistsAtPath:filePath]) {
+        data = [NSData dataWithContentsOfFile:filePath]; // dict[@"data"];
+        [fm removeItemAtPath:filePath error:nil];
+    }
+    
     NSString *text = dict[@"text"];
     NSString *name = dict[@"name"];
     self.backURL = dict[@"backURL"];
