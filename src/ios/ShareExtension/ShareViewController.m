@@ -119,18 +119,17 @@
 
 - (void)viewDidLoad {
     [super viewDidLoad];
-    [self pickUpSelectedPost];
+    [self setup];
 }
 
 - (void)viewDidAppear:(BOOL)animated {
-    [super viewDidAppear:animated];
     [self.view endEditing:YES];
+    [self pickUpSelectedPost];
 }
 
 - (void)pickUpSelectedPost {
-    [self setup];
     [self debug:@"[didSelectPost]"];
-
+    __block BOOL isFinished = NO;
     // This is called after the user selects Post. Do the upload of contentText and/or NSExtensionContext attachments.
     for (NSItemProvider* itemProvider in ((NSExtensionItem*)self.extensionContext.inputItems[0]).attachments) {
         
@@ -182,7 +181,6 @@
                             @"name": theSuggestedName
                         };
                         [self.userDefaults setObject:dict forKey:@"image"];
-                        [self.userDefaults synchronize];
                                                 
                         // Emit a URL that opens the cordova app
                         NSString *url = [NSString stringWithFormat:@"%@://image", SHAREEXT_URL_SCHEME];
@@ -199,7 +197,7 @@
                         // [self.webView loadRequest:request];
                         
                         [self openURL:[NSURL URLWithString:url]];
-                        
+                        isFinished = YES;
                         // Inform the host that we're done, so it un-blocks its UI.
                         [self.extensionContext completeRequestReturningItems:@[] completionHandler:nil];
                         
@@ -224,8 +222,10 @@
         }
     }
 
-    // Inform the host that we're done, so it un-blocks its UI.
-    [self.extensionContext completeRequestReturningItems:@[] completionHandler:nil];
+    if (!isFinished) {
+        // Inform the host that we're done, so it un-blocks its UI.
+        [self.extensionContext completeRequestReturningItems:@[] completionHandler:nil];
+    }
 }
 
 - (NSArray*) configurationItems {
