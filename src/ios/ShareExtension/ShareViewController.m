@@ -122,9 +122,13 @@
     [self setup];
 }
 
-- (void)viewDidAppear:(BOOL)animated {
+- (void)viewWillAppear:(BOOL)animated {
     [self.view endEditing:YES];
     [self pickUpSelectedPost];
+}
+
+- (void)viewDidAppear:(BOOL)animated {
+    // empty override prevents default behavior
 }
 
 - (void)pickUpSelectedPost {
