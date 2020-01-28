@@ -146,24 +146,6 @@
                 
                 [itemProvider loadItemForTypeIdentifier:uti options:nil completionHandler: ^(id<NSSecureCoding> item, NSError *error) {
                     
-                    NSData *data = [[NSData alloc] init];
-                    if([(NSObject*)item isKindOfClass:[NSURL class]]) {
-                        data = [NSData dataWithContentsOfURL:(NSURL*)item];
-                    }
-                    if([(NSObject*)item isKindOfClass:[UIImage class]]) {
-                        data = UIImagePNGRepresentation((UIImage*)item);
-                    }
-                    if ([(NSObject *)item isKindOfClass:[NSData class]]) {
-                        data = [NSData dataWithData:(NSData *)item];
-                    }
-                    
-                    NSString *suggestedName = @"";
-                    if ([(NSObject*)item isKindOfClass:[NSURL class]]) {
-                        suggestedName = [[(NSURL*)item absoluteString] lastPathComponent];
-                    } else if ([itemProvider respondsToSelector:NSSelectorFromString(@"getSuggestedName")]) {
-                        suggestedName = [itemProvider valueForKey:@"suggestedName"];
-                    }
-                                        
                     NSString *uti = @"";
                     NSArray<NSString *> *utis = [NSArray new];
                     if ([itemProvider.registeredTypeIdentifiers count] > 0) {
@@ -174,32 +156,66 @@
                         uti = SHAREEXT_UNIFORM_TYPE_IDENTIFIER;
                     }
                     
-                    void (^finishWithSuggestedName)(NSString *) = ^(NSString *theSuggestedName){
-                     
-                        NSURL *containerUrl = [[NSFileManager defaultManager] containerURLForSecurityApplicationGroupIdentifier:SHAREEXT_GROUP_IDENTIFIER];
-                        NSString *documentsPath = containerUrl.path;
+                    __block NSMutableDictionary *dict = [[NSMutableDictionary alloc] initWithDictionary:@{
+                        @"text": self.contentText,
+                        @"backURL": self.backURL,
+                        @"uti": uti,
+                        @"utis": utis
+                    }];
+                    
+                    NSURL *containerUrl = [[NSFileManager defaultManager] containerURLForSecurityApplicationGroupIdentifier:SHAREEXT_GROUP_IDENTIFIER];
+                    NSString *documentsPath = containerUrl.path;
+                    
+                    NSData *data = nil;
+                    if([(NSObject*)item isKindOfClass:[NSURL class]]) {
+                        // copy file to app group directory and save filename
+                        
+                        NSURL *srcUrl = (NSURL *)item;
+                        NSString *fileName = [srcUrl lastPathComponent];
+                        NSString *dstPath = [documentsPath stringByAppendingPathComponent:fileName];
+                        
+                        NSError *error = nil;
+                        [[NSFileManager defaultManager] copyItemAtPath:srcUrl.path toPath:dstPath error:&error];
+                        if (error != nil) {
+                            NSLog(@"error copying fileUrl to app group directory: %@", error.localizedDescription);
+                        }
+                        dict[@"filename"] = fileName;
+                    }
+                    
+                    if([(NSObject*)item isKindOfClass:[UIImage class]]) {
+                        data = UIImagePNGRepresentation((UIImage*)item);
+                    }
+                    if ([(NSObject *)item isKindOfClass:[NSData class]]) {
+                        data = [NSData dataWithData:(NSData *)item];
+                    }
+                    if (data != nil) {
+                        // write data to file and save filename
                         NSTimeInterval stamp = [[NSDate date] timeIntervalSince1970];
-                        NSString *filename = [theSuggestedName stringByAppendingFormat:@".%.0f", stamp];
+                        NSString *filename = [@"datafile" stringByAppendingFormat:@".%.0f", stamp];
                         NSString *filePath = [documentsPath stringByAppendingPathComponent: filename];
                         [data writeToFile:filePath atomically: YES];
+                        dict[@"filename"] = filename;
+                    }
+                    
+                    NSString *suggestedName = @"";
+                    if ([(NSObject*)item isKindOfClass:[NSURL class]]) {
+                        suggestedName = [[(NSURL*)item absoluteString] lastPathComponent];
+                    } else if ([itemProvider respondsToSelector:NSSelectorFromString(@"getSuggestedName")]) {
+                        suggestedName = [itemProvider valueForKey:@"suggestedName"];
+                    }
+                                        
+                    void (^finishWithSuggestedName)(NSString *) = ^(NSString *theSuggestedName){
+                                             
+                        dict[@"name"] = theSuggestedName;
                         
-                        NSDictionary *dict = @{
-                            @"text": self.contentText,
-                            @"backURL": self.backURL,
-                            // @"data" : data,
-                            @"filename": filename,
-                            @"uti": uti,
-                            @"utis": utis,
-                            @"name": theSuggestedName
-                        };
-                        [self.userDefaults setObject:dict forKey:@"image"];
+                        [self.userDefaults setObject:[dict copy] forKey:@"image"];
                                                 
                         // Emit a URL that opens the cordova app
                         NSString *url = [NSString stringWithFormat:@"%@://image", SHAREEXT_URL_SCHEME];
                         
                         // Not allowed:
                         // [[UIApplication sharedApplication] openURL:[NSURL URLWithString:url]];
-                        
+   
                         // Crashes:
                         // [self.extensionContext openURL:[NSURL URLWithString:url] completionHandler:nil];
                         
