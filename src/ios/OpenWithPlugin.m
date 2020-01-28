@@ -245,20 +245,26 @@ static NSDictionary* launchOptions = nil;
     NSURL *containerUrl = [fm containerURLForSecurityApplicationGroupIdentifier:SHAREEXT_GROUP_IDENTIFIER];
     NSString *documentsPath = containerUrl.path;
     NSString *filename = dict[@"filename"];
-    NSString *filePath = [documentsPath stringByAppendingPathComponent: filename];
-    if (filename != nil && [fm fileExistsAtPath:filePath]) {
-        data = [NSData dataWithContentsOfFile:filePath]; // dict[@"data"];
-        [fm removeItemAtPath:filePath error:nil];
-    }
+    NSString *filePath = [documentsPath stringByAppendingPathComponent:filename];
     
+    if (!(filename != nil && [fm fileExistsAtPath:filePath])) {
+        [self log:VERBOSITY_ERROR message:@"Error: no shared file found! something went wrong :("];
+        return;
+    }
     NSString *text = dict[@"text"];
     NSString *name = dict[@"name"];
     self.backURL = dict[@"backURL"];
     NSString *type = [self mimeTypeFromUti:dict[@"uti"]];
+    
+    data = [NSData dataWithContentsOfFile:filePath];
     if (![data isKindOfClass:NSData.class] || ![text isKindOfClass:NSString.class]) {
         [self debug:@"[checkForFileToShare] Data content is invalid"];
         return;
     }
+    
+    // TODO: move cleaning up processed file to exit() API. don't forget to return { exit: true }
+    // [fm removeItemAtPath:filePath error:nil];
+    
     NSArray *utis = dict[@"utis"];
     if (utis == nil) {
         utis = @[];
@@ -279,7 +285,8 @@ static NSDictionary* launchOptions = nil;
         @"exit": @YES,
         @"items": @[@{
             @"text" : text,
-            @"base64": [data convertToBase64],
+            // @"base64": [data convertToBase64],
+            @"filepath": filePath,
             @"type": type,
             @"utis": utis,
             @"uri": uri,
