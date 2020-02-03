@@ -12,10 +12,17 @@ import android.provider.MediaStore;
 import android.provider.OpenableColumns;
 import android.util.Base64;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Date;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -36,9 +43,12 @@ class Serializer {
             final Intent intent,
             final Context context)
             throws JSONException {
+
+        String extraText = intent.getStringExtra(Intent.EXTRA_TEXT);
+
         JSONArray items = null;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-            items = itemsFromClipData(contentResolver, intent.getClipData(), context);
+            items = itemsFromClipData(contentResolver, intent.getClipData(), context, extraText);
         }
         if (items == null || items.length() == 0) {
             items = itemsFromExtras(contentResolver, intent.getExtras(), context);
@@ -82,13 +92,16 @@ class Serializer {
     public static JSONArray itemsFromClipData(
             final ContentResolver contentResolver,
             final ClipData clipData,
-            final Context context)
+            final Context context,
+            final String extraString)
             throws JSONException {
         if (clipData != null) {
             final int clipItemCount = clipData.getItemCount();
             JSONObject[] items = new JSONObject[clipItemCount];
             for (int i = 0; i < clipItemCount; i++) {
-                items[i] = toJSONObject(contentResolver, clipData.getItemAt(i).getUri(), context);
+                ClipData.Item item = clipData.getItemAt(i);
+                String text = item.getText() != null ? (String)item.getText() : extraString;
+                items[i] = toJSONObject(contentResolver, context, item.getUri(), text);
             }
             return new JSONArray(items);
         }
@@ -108,8 +121,9 @@ class Serializer {
         }
         final JSONObject item = toJSONObject(
                 contentResolver,
+                context,
                 (Uri) extras.get(Intent.EXTRA_STREAM),
-                context);
+                null);
         if (item == null) {
             return null;
         }
@@ -131,8 +145,9 @@ class Serializer {
         }
         final JSONObject item = toJSONObject(
                 contentResolver,
+                context,
                 uri,
-                context);
+                null);
         if (item == null) {
             return null;
         }
@@ -151,44 +166,69 @@ class Serializer {
      */
     public static JSONObject toJSONObject(
             final ContentResolver contentResolver,
+            final Context context,
             final Uri uri,
-            final Context context)
+            final String text
+            )
             throws JSONException {
-        if (uri == null) {
+        if (uri == null && text == null) {
             return null;
         }
-        final JSONObject json = new JSONObject();
-        final String type = contentResolver.getType(uri);
-        json.put("type", type);
-        json.put("uri", uri);
-        json.put("path", getRealPathFromURI(contentResolver, uri));
 
-        Cursor returnCursor =
-                contentResolver.query(uri, null, null, null, null);
-        int nameIndex = returnCursor.getColumnIndex(OpenableColumns.DISPLAY_NAME);
-        returnCursor.moveToFirst();
-        String name = returnCursor.getString(nameIndex);
+        final JSONObject json = new JSONObject();
+        String type = null;
+        String name = null;
+        InputStream inputStream = null;
+
+        if (text != null) {
+            String pattern = "dd.MM.yyyy HH.mm.ss";
+            DateFormat df = new SimpleDateFormat(pattern);
+            Date today = Calendar.getInstance().getTime();
+            String dateStr = df.format(today);
+
+            name = "New File " + dateStr + ".txt";
+            type = "text/plain";
+            inputStream = new ByteArrayInputStream(text.getBytes());
+
+        } else {
+            json.put("uri", uri);
+            json.put("path", getRealPathFromURI(contentResolver, uri));
+            Cursor returnCursor =
+                    contentResolver.query(uri, null, null, null, null);
+            int nameIndex = returnCursor.getColumnIndex(OpenableColumns.DISPLAY_NAME);
+            returnCursor.moveToFirst();
+            name = returnCursor.getString(nameIndex);
+            type = contentResolver.getType(uri);
+            try {
+                inputStream = contentResolver.openInputStream(uri);
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            }
+        }
+
+        String filepath = context.getCacheDir().getAbsolutePath() + File.separator + name;
+        json.put("type", type);
         json.put("name", name);
 
-        // copy file to cache dir and pass name
-        try {
-            InputStream inputStream = contentResolver.openInputStream(uri);
-            String filepath = context.getCacheDir().getAbsolutePath() + File.separator + name;
-            File f = new File(filepath);
-            f.setWritable(true, false);
-            FileOutputStream outputStream = new FileOutputStream(f);
-            byte buffer[] = new byte[1024];
-            int length = 0;
-            while ((length = inputStream.read(buffer)) > 0) {
-                outputStream.write(buffer, 0, length);
+        // copy file to cache dir and set filepath
+        if (inputStream != null) {
+            try {
+                File f = new File(filepath);
+                f.setWritable(true, false);
+                FileOutputStream outputStream = new FileOutputStream(f);
+                byte buffer[] = new byte[1024];
+                int length = 0;
+                while ((length = inputStream.read(buffer)) > 0) {
+                    outputStream.write(buffer, 0, length);
+                }
+                outputStream.close();
+                inputStream.close();
+
+                json.put("filepath", filepath);
+
+            } catch (IOException e) {
+                e.printStackTrace();
             }
-            outputStream.close();
-            inputStream.close();
-
-            json.put("filepath", filepath);
-
-        } catch (IOException e) {
-            e.printStackTrace();
         }
 
         return json;
