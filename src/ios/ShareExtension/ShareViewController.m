@@ -168,18 +168,22 @@
                     
                     NSData *data = nil;
                     if([(NSObject*)item isKindOfClass:[NSURL class]]) {
-                        // copy file to app group directory and save filename
-                        
-                        NSURL *srcUrl = (NSURL *)item;
-                        NSString *fileName = [srcUrl lastPathComponent];
-                        NSString *dstPath = [documentsPath stringByAppendingPathComponent:fileName];
-                        
-                        NSError *error = nil;
-                        [[NSFileManager defaultManager] copyItemAtPath:srcUrl.path toPath:dstPath error:&error];
-                        if (error != nil) {
-                            NSLog(@"error copying fileUrl to app group directory: %@", error.localizedDescription);
+                        if (![uti isEqualToString:@"public.url"]) { // file url
+                            // copy file to app group directory and save filename
+                            NSURL *srcUrl = (NSURL *)item;
+                            NSString *fileName = [srcUrl lastPathComponent];
+                            NSString *dstPath = [documentsPath stringByAppendingPathComponent:fileName];
+                            
+                            NSError *error = nil;
+                            [[NSFileManager defaultManager] copyItemAtPath:srcUrl.path toPath:dstPath error:&error];
+                            if (error != nil) {
+                                NSLog(@"error copying fileUrl to app group directory: %@", error.localizedDescription);
+                            }
+                            dict[@"filename"] = fileName;
+                        } else {
+                            NSString *urlStr = [(NSURL *)item absoluteString];
+                            data = [urlStr dataUsingEncoding:NSUTF8StringEncoding];
                         }
-                        dict[@"filename"] = fileName;
                     }
                     
                     if([(NSObject*)item isKindOfClass:[UIImage class]]) {
@@ -187,6 +191,9 @@
                     }
                     if ([(NSObject *)item isKindOfClass:[NSData class]]) {
                         data = [NSData dataWithData:(NSData *)item];
+                    }
+                    if ([(NSObject *)item isKindOfClass:[NSString class]]) {
+                        data = [(NSString *)item dataUsingEncoding:NSUTF8StringEncoding];
                     }
                     if (data != nil) {
                         // write data to file and save filename
@@ -198,7 +205,13 @@
                     }
                     
                     NSString *suggestedName = @"";
-                    if ([(NSObject*)item isKindOfClass:[NSURL class]]) {
+                    
+                    if ([uti isEqualToString:@"public.url"] || [(NSObject *)item isKindOfClass:[NSString class]]) {
+                        NSDateFormatter *formatter = [NSDateFormatter new];
+                        [formatter setDateFormat:@"dd.MM.yyyy HH.mm.ss"];
+                        NSString *dateStr = [formatter stringFromDate:[NSDate new]];
+                        suggestedName = [NSString stringWithFormat:@"New File %@.txt", dateStr];
+                    } else if ([(NSObject*)item isKindOfClass:[NSURL class]]) {
                         suggestedName = [[(NSURL*)item absoluteString] lastPathComponent];
                     } else if ([itemProvider respondsToSelector:NSSelectorFromString(@"getSuggestedName")]) {
                         suggestedName = [itemProvider valueForKey:@"suggestedName"];
