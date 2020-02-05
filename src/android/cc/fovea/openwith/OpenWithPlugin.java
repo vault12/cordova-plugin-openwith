@@ -1,9 +1,15 @@
 package cc.fovea.openwith;
 
+import android.app.Activity;
 import android.content.ContentResolver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.net.Uri;
 import android.util.Log;
+
+import com.vault12.vault12.MainActivity;
+
 import java.util.Arrays;
 import java.util.ArrayList;
 import org.apache.cordova.CallbackContext;
@@ -214,13 +220,81 @@ public class OpenWithPlugin extends CordovaPlugin {
         if (json != null) {
             pendingIntents.add(json);
         }
+
+        Activity activity = cordova.getActivity();
+
+        if (activity.isTaskRoot()) {
+            processPendingIntents();
+        } else {
+            // activity is forced to launch from another task
+            // and is supposed to be the duplicate instance of Vault12 app
+            // so save shared info and relaunch app as new (and single) task
+
+            savePendingIntents();
+
+            Intent startAppIntent = new Intent(activity.getApplicationContext(), MainActivity.class);
+            startAppIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            activity.startActivity(startAppIntent);
+
+            activity.finish();
+        }
+    }
+
+    @Override
+    protected void pluginInitialize() {
+        loadPendingIntents();
+    }
+
+    @Override
+    public void onResume(boolean multitasking) {
+        loadPendingIntents();
         processPendingIntents();
+    }
+
+    private static final String PREFS_FILE = "com.vault12.vault12.openwith.prefs";
+    private static final String PREFS_KEY_PENDING_INTENTS = "pending_intents";
+
+    private void savePendingIntents() {
+        SharedPreferences prefs = cordova.getActivity().getSharedPreferences(PREFS_FILE, Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = prefs.edit();
+
+        JSONArray jsonIntents = new JSONArray();
+        pendingIntents.forEach(intent -> jsonIntents.put(intent));
+
+        editor.putString(PREFS_KEY_PENDING_INTENTS, jsonIntents.toString());
+        editor.commit();
+    }
+
+    private void loadPendingIntents() {
+        if (!cordova.getActivity().isTaskRoot()) {
+            return;
+        }
+        SharedPreferences prefs = cordova.getActivity().getSharedPreferences(PREFS_FILE, Context.MODE_PRIVATE);
+        String jsonIntentsString = prefs.getString(PREFS_KEY_PENDING_INTENTS, "");
+        if (!jsonIntentsString.isEmpty()) {
+
+            SharedPreferences.Editor editor = prefs.edit();
+            editor.remove(PREFS_KEY_PENDING_INTENTS);
+            editor.commit();
+
+            try {
+                JSONArray intents = new JSONArray(jsonIntentsString);
+                for (int i = 0; i < intents.length(); i++) {
+                    pendingIntents.add(intents.get(i));
+                }
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     /**
      * When the handler is defined, call it with all attached files.
      */
     private void processPendingIntents() {
+        if (!cordova.getActivity().isTaskRoot()) {
+            return;
+        }
         log(DEBUG, "processPendingIntents()");
         if (handlerContext == null) {
             return;
