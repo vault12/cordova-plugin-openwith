@@ -206,7 +206,19 @@ class Serializer {
             }
         }
 
-        String filepath = context.getCacheDir().getAbsolutePath() + File.separator + name;
+        // create cache sub dir
+        File shareDir = new File(context.getCacheDir(), "com_vault12_vault12_openWith_shared");
+        if (!shareDir.exists()) {
+            shareDir.mkdir();
+        }
+        // clear previous hanged files
+        String[] children = shareDir.list();
+        for (String child : children) {
+            new File(shareDir, child).delete();
+        }
+
+        String shareDirPath = shareDir.getAbsolutePath();
+        String filepath = shareDirPath + File.separator + name;
         json.put("type", type);
         json.put("name", name);
 

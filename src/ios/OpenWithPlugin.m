@@ -242,7 +242,7 @@ static NSDictionary* launchOptions = nil;
     NSData *data = nil;
     
     NSFileManager *fm = [NSFileManager defaultManager];
-    NSURL *containerUrl = [fm containerURLForSecurityApplicationGroupIdentifier:SHAREEXT_GROUP_IDENTIFIER];
+    NSURL *containerUrl = [[fm containerURLForSecurityApplicationGroupIdentifier:SHAREEXT_GROUP_IDENTIFIER] URLByAppendingPathComponent:@"shared"];
     NSString *documentsPath = containerUrl.path;
     NSString *filename = dict[@"filename"];
     NSString *filePath = [documentsPath stringByAppendingPathComponent:filename];

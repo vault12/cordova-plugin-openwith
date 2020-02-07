@@ -163,8 +163,31 @@
                         @"utis": utis
                     }];
                     
+                    NSFileManager *fileManager = [NSFileManager defaultManager];
+                    
                     NSURL *containerUrl = [[NSFileManager defaultManager] containerURLForSecurityApplicationGroupIdentifier:SHAREEXT_GROUP_IDENTIFIER];
-                    NSString *documentsPath = containerUrl.path;
+                    NSString *sharedFilesPath = [containerUrl URLByAppendingPathComponent:@"shared"].path;
+                    
+                    // create path if doesnt exist
+                    BOOL isDir;
+                    if (![fileManager fileExistsAtPath:sharedFilesPath isDirectory:&isDir]) {
+                        [fileManager createDirectoryAtPath:sharedFilesPath withIntermediateDirectories:YES attributes:nil error:&error];
+                        if (error != nil) {
+                            NSLog(@"Error creating directory at specified path: %@", error);
+                        }
+                    }
+                    // clear all files at path
+                    NSDirectoryEnumerator *enumerator = [fileManager enumeratorAtPath:sharedFilesPath];
+                    NSString *file;
+                    while (file = [enumerator nextObject]) {
+                        NSError *error = nil;
+                        BOOL result = [fileManager removeItemAtPath:[sharedFilesPath stringByAppendingPathComponent:file] error:&error];
+                        if (!result && error) {
+                            NSLog(@"Error cleaning up old files: %@", error);
+                        }
+                    }
+                    
+                    NSString *documentsPath = sharedFilesPath;
                     
                     NSData *data = nil;
                     if([(NSObject*)item isKindOfClass:[NSURL class]]) {
@@ -175,7 +198,7 @@
                             NSString *dstPath = [documentsPath stringByAppendingPathComponent:fileName];
                             
                             NSError *error = nil;
-                            [[NSFileManager defaultManager] copyItemAtPath:srcUrl.path toPath:dstPath error:&error];
+                            [fileManager copyItemAtPath:srcUrl.path toPath:dstPath error:&error];
                             if (error != nil) {
                                 NSLog(@"error copying fileUrl to app group directory: %@", error.localizedDescription);
                             }
